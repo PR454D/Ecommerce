@@ -1,0 +1,29 @@
+server:
+  port: 8081
+spring:
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/paymentdb
+    username: root
+    password: Gaurav1234
+    driverClassName: com.mysql.cj.jdbc.Driver
+  application:
+    name: PAYMENT-SERVICE
+  config:
+    import: configserver:http://localhost:9296
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
+#  instance:
+#    prefer-ip-address: true
+#  client:
+#    fetch-registry: true
+#    registry-with-eureka: true
+#    service-url:
+#      defaultZone: ${EUREKA_SERVER__ADDRESS:http://localhost:8761/eureka}
+
