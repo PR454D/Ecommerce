@@ -1,5 +1,7 @@
 package com.gaurav.authorizationserver.config;
 
+import com.gaurav.authorizationserver.repository.UserRepository;
+import com.gaurav.authorizationserver.service.JdbcUserDetailsService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -68,12 +70,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(){
-        var user = User.withUsername("gaurav").password("password").authorities("read").roles("VIEWER").build();
-        var adminUser = User.withUsername("admin").password("password").authorities("read").roles("VIEWER","ADMIN").build();
-
-        return new InMemoryUserDetailsManager(user,adminUser);
-
+    UserDetailsService userDetailsService(UserRepository userRepository) {
+        return new JdbcUserDetailsService(userRepository);
     }
     @Bean
     public PasswordEncoder passwordEncoder(){
