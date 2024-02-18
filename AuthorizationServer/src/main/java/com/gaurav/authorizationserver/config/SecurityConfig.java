@@ -8,6 +8,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -17,6 +18,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -80,8 +82,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public RegisteredClientRepository clientRegistrationRepository(){
-        var registerClient= RegisteredClient.withId("1").clientId("public-client-app").
+    public RegisteredClientRepository clientRegistrationRepository(JdbcTemplate jdbcTemplate){
+        var registeredClient= RegisteredClient.withId("1").clientId("public-client-app").
                 clientSecret("secret").
                 scope(OidcScopes.OPENID).
                 scope(OidcScopes.PROFILE).
@@ -93,9 +95,13 @@ public class SecurityConfig {
                 authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN).
         authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                .build();
-
-        return new InMemoryRegisteredClientRepository(registerClient);
+        JdbcRegisteredClientRepository registeredClientRepository =
+                new JdbcRegisteredClientRepository(jdbcTemplate);
+        registeredClientRepository.save(registeredClient);
+        return registeredClientRepository;
     }
+
+
 
 @Bean
 public AuthorizationServerSettings authorizationServerSettings(){

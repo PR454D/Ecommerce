@@ -1,2 +1,15 @@
 server:
   port: 8083
+spring:
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/authdb
+    username: root
+    password: Gaurav1234
+    driverClassName: com.mysql.cj.jdbc.Driver
+  application:
+    name: AUTH-SERVICE
