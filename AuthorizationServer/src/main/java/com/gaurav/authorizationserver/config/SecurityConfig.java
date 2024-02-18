@@ -11,13 +11,19 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
@@ -36,7 +42,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 
 
 @Configuration
@@ -54,16 +60,17 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain securityWebFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.authorizeHttpRequests(request->request.anyRequest().authenticated()).formLogin(Customizer.withDefaults());
+        httpSecurity.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(request->request.anyRequest().authenticated()).formLogin(Customizer.withDefaults());
 
                 return httpSecurity.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService(){
-        var user = User.withUsername("gaurav").password("password").authorities("read").build();
+        var user = User.withUsername("gaurav").password("password").authorities("read").roles("VIEWER").build();
+        var adminUser = User.withUsername("admin").password("password").authorities("read").roles("VIEWER","ADMIN").build();
 
-        return new InMemoryUserDetailsManager(user);
+        return new InMemoryUserDetailsManager(user,adminUser);
 
     }
     @Bean
@@ -113,4 +120,15 @@ public AuthorizationServerSettings authorizationServerSettings(){
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
 
+    @Bean
+    public OAuth2TokenCustomizer<JwtEncodingContext> jwtEncodingContextOAuth2TokenCustomizer(){
+
+        return context -> {
+            if (context.getTokenType().getValue().equals(OAuth2TokenType.ACCESS_TOKEN.getValue())){
+                Authentication principal=context.getPrincipal();
+              var authorities=  principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+              context.getClaims().claim("authorities",authorities);
+            }
+        };
+    }
 }
