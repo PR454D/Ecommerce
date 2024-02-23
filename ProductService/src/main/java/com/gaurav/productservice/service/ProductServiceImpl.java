@@ -8,6 +8,8 @@ import com.gaurav.productservice.repository.ProductRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
@@ -15,6 +17,7 @@ import static org.springframework.beans.BeanUtils.copyProperties;
 @Service
 @Log4j2
 public class ProductServiceImpl implements ProductService{
+
 
     @Autowired
     ProductRepository productRepository;
@@ -29,6 +32,7 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
+    @Cacheable(value = "products", key = "#productId")
     public ProductResponse getProductById(long productId) {
         log.info("Get the product for productId: {}",productId);
         Product product=productRepository.findById(productId).orElseThrow(()-> new ProductServiceException("Product with given id not found","PRODUCT_NOT_FOUND"));
